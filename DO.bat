@@ -1,0 +1,1 @@
+import-into-eclipse.bat 2> log.txt
