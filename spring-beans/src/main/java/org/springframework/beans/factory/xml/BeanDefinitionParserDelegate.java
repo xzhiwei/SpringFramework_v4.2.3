@@ -549,6 +549,7 @@ public class BeanDefinitionParserDelegate {
 			parseReplacedMethodSubElements(ele, bd.getMethodOverrides());
 
 			parseConstructorArgElements(ele, bd);
+			 //注意这里是对依赖关系，也就是bean对象属性的处理！
 			parsePropertyElements(ele, bd);
 			parseQualifierElements(ele, bd);
 
@@ -753,8 +754,11 @@ public class BeanDefinitionParserDelegate {
 	/**
 	 * Parse property sub-elements of the given bean element.
 	 */
+	// 对所有的属性进行解析
 	public void parsePropertyElements(Element beanEle, BeanDefinition bd) {
+		 //这里取得所有定义的属性定义  
 		NodeList nl = beanEle.getChildNodes();
+		//很显然，需要一个一个的处理  
 		for (int i = 0; i < nl.getLength(); i++) {
 			Node node = nl.item(i);
 			if (isCandidateElement(node) && nodeNameEquals(node, PROPERTY_ELEMENT)) {
@@ -885,7 +889,9 @@ public class BeanDefinitionParserDelegate {
 	/**
 	 * Parse a property element.
 	 */
+	// 解析Bean的属性，也即是xml中定义的name，bean的属性，@Autowired属性
 	public void parsePropertyElement(Element ele, BeanDefinition bd) {
+		//这里得到属性定义的名字  
 		String propertyName = ele.getAttribute(NAME_ATTRIBUTE);
 		if (!StringUtils.hasLength(propertyName)) {
 			error("Tag 'property' must have a 'name' attribute", ele);
@@ -893,14 +899,19 @@ public class BeanDefinitionParserDelegate {
 		}
 		this.parseState.push(new PropertyEntry(propertyName));
 		try {
+			 //判断是不是已经有重名的属性定义  
 			if (bd.getPropertyValues().contains(propertyName)) {
 				error("Multiple 'property' definitions for property '" + propertyName + "'", ele);
 				return;
 			}
+			//这里根据属性的名字对属性的定义进行具体的解析，结果放在PropertyValue对象里面  
+	        //这里包含了对各种属性类型的解析，比如List，Map，Set,当然还有reference bean等等,  
+	        //这个propertyValue是连接和表示各个bean之间依赖关系的桥梁
 			Object val = parsePropertyValue(ele, bd, propertyName);
 			PropertyValue pv = new PropertyValue(propertyName, val);
 			parseMetaElements(ele, pv);
 			pv.setSource(extractSource(ele));
+			//最后把这个解析的结果，也就是生成的Property对象放到beanDefinition里面去  
 			bd.getPropertyValues().addPropertyValue(pv);
 		}
 		finally {
@@ -954,12 +965,14 @@ public class BeanDefinitionParserDelegate {
 	 * Get the value of a property element. May be a list etc.
 	 * Also used for constructor arguments, "propertyName" being null in this case.
 	 */
+	// 具体的对各种属性定义的解析，在parsePropertyValue函数中： 
 	public Object parsePropertyValue(Element ele, BeanDefinition bd, String propertyName) {
 		String elementName = (propertyName != null) ?
 						"<property> element for property '" + propertyName + "'" :
 						"<constructor-arg> element";
 
 		// Should only have one child element: ref, value, list, etc.
+		//这里根据DOM取得需要分析的属性定义  
 		NodeList nl = ele.getChildNodes();
 		Element subElement = null;
 		for (int i = 0; i < nl.getLength(); i++) {
@@ -983,22 +996,26 @@ public class BeanDefinitionParserDelegate {
 			error(elementName +
 					" is only allowed to contain either 'ref' attribute OR 'value' attribute OR sub-element", ele);
 		}
-
+		//这里是对ref属性的解析，称称一个RuntimeBeanReference对象，  
+        //这个RuntimeBeanReference很简单，只是保持beanName，toParent，source三个属性信息，对记录依赖关系已经足够了  
 		if (hasRefAttribute) {
 			String refName = ele.getAttribute(REF_ATTRIBUTE);
 			if (!StringUtils.hasText(refName)) {
 				error(elementName + " contains empty 'ref' attribute", ele);
 			}
+			// 此处可以看出，如果定义的是ref对象，则生成RuntimeBeanReference对象
 			RuntimeBeanReference ref = new RuntimeBeanReference(refName);
 			ref.setSource(extractSource(ele));
 			return ref;
 		}
 		else if (hasValueAttribute) {
+			// 如果定义的是value类型，则生成一个TypedStringValue对象
 			TypedStringValue valueHolder = new TypedStringValue(ele.getAttribute(VALUE_ATTRIBUTE));
 			valueHolder.setSource(extractSource(ele));
 			return valueHolder;
 		}
 		else if (subElement != null) {
+			//这里对各种其他属性值进行处理，比如List，Map，Set等等  
 			return parsePropertySubElement(subElement, bd);
 		}
 		else {

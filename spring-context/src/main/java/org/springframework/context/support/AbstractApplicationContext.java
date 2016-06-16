@@ -510,7 +510,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			 * 为刷新做准备，设置启动时间等
 			 */
 			prepareRefresh();
-
+			
 			// Tell the subclass to refresh the internal bean factory.
 			/**
 			 * 获取到一个beanFactory对象，在这里加载了XML文件中定义的所有bean
@@ -518,10 +518,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			 * 这个地方完成对XML的解析，在 DefaultListableBeanFactory 中的beanDefinitionMap 中保存 （每个bean解析成一个 BeanDefinition）
 			 */
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
-
+			
 			// Prepare the bean factory for use in this context.
 			prepareBeanFactory(beanFactory);
-
+			System.out.println(2);
 			try {
 				// Allows post-processing of the bean factory in context subclasses.
 				postProcessBeanFactory(beanFactory);
@@ -544,6 +544,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				// Check for listener beans and register them.
 				registerListeners();
 
+				/**
+				 * 这个地方完成 non-lazy-init单例对象的生产（newInstance()）
+				 */
 				// Instantiate all remaining (non-lazy-init) singletons.
 				finishBeanFactoryInitialization(beanFactory);
 
@@ -847,6 +850,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.freezeConfiguration();
 
 		// Instantiate all remaining (non-lazy-init) singletons.
+		// 预初始化
 		beanFactory.preInstantiateSingletons();
 	}
 

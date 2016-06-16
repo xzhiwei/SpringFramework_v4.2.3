@@ -284,6 +284,7 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 		}
 	}
 
+	// 对不同类型属性进行注入
 	@SuppressWarnings("unchecked")
 	protected void setPropertyValue(PropertyTokenHolder tokens, PropertyValue pv) throws BeansException {
 		String propertyName = tokens.canonicalName;
@@ -296,6 +297,8 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 			getterTokens.actualName = tokens.actualName;
 			getterTokens.keys = new String[tokens.keys.length - 1];
 			System.arraycopy(tokens.keys, 0, getterTokens.keys, 0, tokens.keys.length - 1);
+			//这里取得需要的propertyValue, 这个getPropertyValue同样不简单，这个getProperty实际上已经取出了bean对象中的属性引用  
+	        //所以下面可以直接把依赖对象注入过去  
 			Object propValue;
 			try {
 				propValue = getPropertyValue(getterTokens);
@@ -321,6 +324,7 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 									"in indexed property path '" + propertyName + "': returned null");
 				}
 			}
+			
 			if (propValue.getClass().isArray()) {
 				PropertyHandler ph = getLocalPropertyHandler(actualName);
 				Class<?> requiredType = propValue.getClass().getComponentType();
@@ -383,6 +387,7 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 					}
 				}
 			}
+			//这里处理对Map的注入  
 			else if (propValue instanceof Map) {
 				PropertyHandler ph = getLocalPropertyHandler(actualName);
 				Class<?> mapKeyType = ph.getMapKeyType(tokens.keys.length);
@@ -408,7 +413,7 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 								"' is neither an array nor a List nor a Map; returned value was [" + propValue + "]");
 			}
 		}
-
+		 //这里是通过对一般属性进行注入的地方  
 		else {
 			PropertyHandler ph = getLocalPropertyHandler(actualName);
 			if (ph == null || !ph.isWritable()) {

@@ -231,6 +231,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @return an instance of the bean
 	 * @throws BeansException if the bean could not be created
 	 */
+	// 获取bean，这个是最重要的方法之一
 	@SuppressWarnings("unchecked")
 	protected <T> T doGetBean(
 			final String name, final Class<T> requiredType, final Object[] args, boolean typeCheckOnly)
@@ -240,6 +241,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		Object bean;
 
 		// Eagerly check singleton cache for manually registered singletons.
+		// 这里先从缓存中去取,处理那些已经被创建过的单件模式的bean，对这种bean的请求不需要重复的去创建  
 		Object sharedInstance = getSingleton(beanName);
 		if (sharedInstance != null && args == null) {
 			if (logger.isDebugEnabled()) {
@@ -262,6 +264,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 
 			// Check if bean definition exists in this factory.
+			//这里检查是否能在当前的工厂中取到我们需要的bean，如果在当前的工厂中取不到，则到父工厂取，如果一直取不到  
+	        //那就顺着工厂链一直向上查找  
 			BeanFactory parentBeanFactory = getParentBeanFactory();
 			if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
 				// Not found -> check parent.
@@ -272,6 +276,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				}
 				else {
 					// No args -> delegate to standard getBean method.
+					// 这里调用父工厂的getbean取需要的bean  
+		            // 这里有一个迭代，在父工厂中也会重复这么一个getbean的过程。  
 					return parentBeanFactory.getBean(nameToLookup, requiredType);
 				}
 			}
@@ -298,11 +304,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				}
 
 				// Create bean instance.
+				//这里是根据beandefinition来创建bean和完成依赖注入的地方。 
 				if (mbd.isSingleton()) {
 					sharedInstance = getSingleton(beanName, new ObjectFactory<Object>() {
 						@Override
 						public Object getObject() throws BeansException {
 							try {
+								 //注意这个createBean，是创建bean同时完成依赖注入的地方。
 								return createBean(beanName, mbd, args);
 							}
 							catch (BeansException ex) {
@@ -316,12 +324,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					});
 					bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				}
-
+				//这里是处理prototype类型的bean请求的地方  
 				else if (mbd.isPrototype()) {
 					// It's a prototype -> create a new instance.
 					Object prototypeInstance = null;
 					try {
 						beforePrototypeCreation(beanName);
+						//每次请求，直接通过createBean来创建  
 						prototypeInstance = createBean(beanName, mbd, args);
 					}
 					finally {

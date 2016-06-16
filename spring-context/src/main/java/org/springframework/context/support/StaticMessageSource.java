@@ -34,6 +34,10 @@ import org.springframework.util.Assert;
  * @author Juergen Hoeller
  */
 public class StaticMessageSource extends AbstractMessageSource {
+	
+	public StaticMessageSource(){
+		System.out.println(" is init");
+	}
 
 	/** Map from 'code + locale' keys to message Strings */
 	private final Map<String, String> messages = new HashMap<String, String>();

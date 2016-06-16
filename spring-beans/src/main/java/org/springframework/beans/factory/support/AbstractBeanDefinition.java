@@ -133,7 +133,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 */
 	public static final String INFER_METHOD = "(inferred)";
 
-
+	// 通过Class.forName形成的Class对象
 	private volatile Object beanClass;
 
 	private String scope = SCOPE_DEFAULT;
@@ -161,6 +161,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	private ConstructorArgumentValues constructorArgumentValues;
 
+	// //这个属性持有的这个bean的依赖属性，比如各种property的定义信息  
 	private MutablePropertyValues propertyValues;
 
 	private MethodOverrides methodOverrides = new MethodOverrides();
